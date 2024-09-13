@@ -1,0 +1,101 @@
+from tkinter import *
+from tkinter import ttk
+from tkinter import messagebox
+import mysql.connector
+
+mydb = mysql.connector.connect(
+  host="sql5.freesqldatabase.com",
+  user="sql5730781",
+  password="lyRG98lVQy",
+  database="sql5730781"
+)
+
+
+"""     logininfo
+UserID | Username | Password
+
+"""
+mycursor = mydb.cursor()
+mycursor.execute("TRUNCATE TABLE logininfo;")
+def sendinfo(u, p):
+    sql = f"SELECT * FROM logininfo"
+    try:
+        mycursor.execute(sql)
+        myresult = mycursor.fetchall()
+        if myresult == []:
+            messagebox.showinfo(message="User or password does not exist, please try again or make a new user")
+        for x in myresult:
+            if u == x[1]:
+                if p == x[2]:
+                    messagebox.showinfo(message="Successfully signed into Chosen.net!")
+                    break
+                else:
+                    messagebox.showinfo(message="Password does not match username, try again")
+                    break
+            else:
+                messagebox.showinfo(message="User or password does not exist, please try again or make a new user")
+                break
+    except mysql.connector.errors.ProgrammingError:
+        messagebox.showinfo(message = "User does not exist")
+
+def call(u, p):
+    val = [u, p]
+    res = messagebox.askquestion('Create User', f'Would you like to create the user with this information:'
+                                                f'\n{u}, {p}')
+    if res == 'yes':
+        return True
+    else:
+        return False
+
+def createuser(u, p):
+    val = [u, p]
+    if call(u, p):
+        try:
+            checker = f"SELECT * FROM logininfo"
+            mycursor.execute(checker)
+            result = mycursor.fetchall()
+            if result == []:
+                raise Exception
+            for x in result:
+                if u == x[1]:
+                    messagebox.showinfo(message="Username already exists")
+                    break
+        except Exception or result == []:
+            ins = f"INSERT INTO logininfo (Username, Password) VALUES (%s, %s)"
+            message = f"Successfully created and added your information:\nUser- {u} Password- {p}\nto our database!"
+            mycursor.execute(ins, val)
+            messagebox.showinfo(message=message)
+            mydb.commit()
+
+root = Tk()
+root.title("CHOSEN.net")
+root.geometry("400x250")
+root.configure(bg="light gray")
+
+frame1 = Frame(master=root, relief="raised", height=5, bd=3)
+frame1.pack(pady=30, side=BOTTOM)
+
+welcome = Label(master=root, text="Welcome to Chosen Network", font=("Times New Roman", 30, "bold"), justify=CENTER, bg="light gray")
+welcome.pack(side=TOP, pady=30)
+
+userid = StringVar()
+usertext = Label(master=frame1, text="USER ID", font=("Arial", 14), justify=CENTER)
+usertext.grid(column=0, row=1)
+uentry = Entry(master=frame1, textvariable=userid, width=25, background="light gray")
+uentry.grid(column=1, row=1)
+
+password = StringVar()
+passtext = Label(master=frame1, text="PASSWORD", font=("Arial", 14), justify=CENTER)
+passtext.grid(column=0, row=2)
+pentry = Entry(master=frame1, textvariable=password, width=25, background="light gray")
+pentry.grid(column=1, row=2)
+
+send = Button(master=frame1, text="Sign In", font=("Arial", 14), justify=CENTER, fg="blue", bg="blue",
+              command=lambda: sendinfo(userid.get(), password.get()))
+send.grid(column=1, row=3)
+
+create = Button(master=frame1, text="Sign Up", font=("Arial", 14), justify=CENTER, fg="blue", bg="blue",
+              command=lambda: createuser(userid.get(), password.get()))
+create.grid(column=0, row=3)
+
+root.mainloop()
